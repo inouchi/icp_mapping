@@ -1,0 +1,3 @@
+bool isFirstBoot
+---
+bool isSuccess
