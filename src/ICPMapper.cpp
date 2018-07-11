@@ -11,11 +11,22 @@ ICPMapper::ICPMapper(ros::NodeHandle* nodeHandlePtr, ros::NodeHandle* localNodeH
   modelPub_ = nodeHandlePtr->advertise<sensor_msgs::PointCloud2>(ros::this_node::getName() + "/model", 1);
 
   generateModelSrv_ = localNodeHandlePtr_->advertiseService("generate_model", &ICPMapper::generateModel, this);
-
-  filter_.minAxis[0] = -0.2;  filter_.maxAxis[0] = 0.2;
-  filter_.minAxis[1] = -0.3;  filter_.maxAxis[1] = 0.17;
-  filter_.minAxis[2] =  0.8;  filter_.maxAxis[2] = 1.1;
+ 
+  if (!(localNodeHandlePtr_->getParam("filter_min_axis", filter_.minAxis)))
+  {
+    filter_.minAxis[0] = -0.2; 
+    filter_.minAxis[1] = -0.3;
+    filter_.minAxis[2] =  0.8;
+  }
+  
+  if (!(nodeHandlePtr->getParam("filter_max_axis", filter_.maxAxis)))
+  {
+    filter_.maxAxis[0] = 0.2;
+    filter_.maxAxis[1] = 0.17;
+    filter_.maxAxis[2] = 1.1;
+  }
 }
+ 
 
 
 ICPMapper::~ICPMapper()
@@ -56,7 +67,7 @@ void ICPMapper::matching(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, con
 
   Eigen::Matrix4f initGuess = Eigen::Matrix4f::Identity();
   icp.align(*output, initGuess);
-  
+
   *output += *target;
   std::cout << "Has converged:" << icp.hasConverged() << " Score: " << icp.getFitnessScore() << std::endl;
   std::cout << icp.getFinalTransformation() << std::endl;

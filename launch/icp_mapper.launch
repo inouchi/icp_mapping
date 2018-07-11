@@ -1,0 +1,12 @@
+<launch>
+
+    <!-- Run icp_mapper node -->
+    <node name="icp_mapper_node" pkg="ssh_icp_mapping" type="icp_mapper_node" clear_params="true" output="screen" >
+
+        <!-- The Filter is used for genetating a model using ICP -->
+        <rosparam param="filter_min_axis">[-0.2, -0.3, 0.5]</rosparam>
+        <rosparam param="filter_max_axis">[0.2, 0.18, 1.1]</rosparam>
+
+    </node>
+
+</launch>
