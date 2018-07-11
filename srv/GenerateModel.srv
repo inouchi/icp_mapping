@@ -1,3 +1,5 @@
 bool isFirstBoot
+float32 degree
+float32 distance
 ---
 bool isSuccess
