@@ -57,13 +57,13 @@ void ICPMapper::matching(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, con
   icp.setInputTarget(target);
  
   // Set the max correspondence distance to 1cm (e.g., correspondences with higher distances will be ignored)
-  icp.setMaxCorrespondenceDistance(0.01);
+  //icp.setMaxCorrespondenceDistance(1.0);
   // Set the maximum number of iterations (criterion 1)
-  icp.setMaximumIterations(100);
+  icp.setMaximumIterations(800);
   // Set the transformation epsilon (criterion 2)
-  icp.setTransformationEpsilon(1e-9);
+  //icp.setTransformationEpsilon(1e-9);
   // Set the euclidean distance difference epsilon (criterion 3)
-  icp.setEuclideanFitnessEpsilon(1);
+  //icp.setEuclideanFitnessEpsilon(1);
 
   Eigen::Matrix4f initGuess = Eigen::Matrix4f::Identity();
   icp.align(*output, initGuess);
@@ -105,13 +105,17 @@ void ICPMapper::filtering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, p
   pass.filter(*tmp);
   pass.setInputCloud(tmp);
 
-
   //Set range of z axis
   pass.setFilterFieldName("z");
   pass.setFilterLimits(filter.minAxis[2], filter.maxAxis[2]);
- 
-  //pass.setFilterLimitsNegative(false);
-  pass.filter(*output);
+  pass.filter(*tmp);
+
+  // Create the filtering object
+  pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
+  sor.setInputCloud(tmp);
+  sor.setMeanK(50);
+  sor.setStddevMulThresh(1.0);
+  sor.filter(*output);
 }
 
 
@@ -119,24 +123,21 @@ void ICPMapper::rotatePointCloud(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& i
 {
   Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
 
+  pcl::PointCloud<pcl::PointXYZRGB> tmp;
+  transform(2, 3) = -distance;
+  pcl::transformPointCloud(*input, tmp, transform);
+
+  transform = Eigen::Matrix4f::Identity();
   float theta = pcl::deg2rad(degree);  // The y-angle of rotation in radians on kinect system coordination
   transform(0, 0) =  cos(theta);
   transform(0, 2) =  sin(theta);
   transform(2, 0) = -sin(theta);
   transform(2, 2) =  cos(theta);
 
-  // Executing the transformation
-  pcl::PointCloud<pcl::PointXYZRGB> tmp;
-  pcl::transformPointCloud(*input, tmp, transform);
-
-  float diffX = input->points[0].x - tmp.points[0].x;
-  float diffZ = input->points[0].z - tmp.points[0].z;
+  pcl::transformPointCloud(tmp, tmp, transform);
 
   transform = Eigen::Matrix4f::Identity();
-  transform(0, 3) = diffX;
-  transform(2, 3) = diffZ;
-
-  // Executing the transformation
+  transform(2, 3) = distance;
   pcl::transformPointCloud(tmp, *output, transform);
 }
 
@@ -177,7 +178,7 @@ bool ICPMapper::generateModel(ssh_icp_mapping::GenerateModelRequest& req, ssh_ic
   rotatePointCloud(filteredCloud, rotatedCloud, req.degree, req.distance);
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output(new pcl::PointCloud<pcl::PointXYZRGB>());
-  matching(filteredCloud, model_, output);
+  matching(rotatedCloud, model_, output);
   
   if (output == nullptr)
   {
@@ -187,7 +188,7 @@ bool ICPMapper::generateModel(ssh_icp_mapping::GenerateModelRequest& req, ssh_ic
     return false;
   }
 
-  *model_ = *output;
+  *model_ += *output;
   publishPointCloud(model_, "kinect");
   res.isSuccess = true;
 

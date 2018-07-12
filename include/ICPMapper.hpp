@@ -22,6 +22,8 @@
 #include <pcl/registration/icp.h>
 #include <pcl/common/angles.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/statistical_outlier_removal.h>
+
 
 struct Filter
 {
