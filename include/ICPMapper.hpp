@@ -29,13 +29,34 @@ struct Filter
 {
   Filter()
   {
+    leafSizes.resize(3);
     minAxis.resize(3);
     maxAxis.resize(3);
   }
 
+  std::vector<float> leafSizes;
   std::vector<float> minAxis;
   std::vector<float> maxAxis;
 };
+
+
+struct ICPParameter
+{
+  ICPParameter()
+  {
+    // Default parameters
+    maxIterations = 100;
+    maxCorrespondenceDistance = 0.1;
+    transformationEpsilon = 1e-6;
+    euclideanFitnessEpsilon = 1.0;
+  }
+
+  int maxIterations;
+  float maxCorrespondenceDistance;
+  float transformationEpsilon;
+  float euclideanFitnessEpsilon;
+};
+
 
 class ICPMapper
 {
@@ -68,5 +89,6 @@ class ICPMapper
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr model_;          // GeFor determing scope of point cloud used in ICPunerated model by ICP
 
     Filter filter_;  // For determing scope of point cloud used in ICP 
+    ICPParameter icpParam_; 
 
 };

@@ -11,19 +11,23 @@ ICPMapper::ICPMapper(ros::NodeHandle* nodeHandlePtr, ros::NodeHandle* localNodeH
   modelPub_ = nodeHandlePtr->advertise<sensor_msgs::PointCloud2>(ros::this_node::getName() + "/model", 1);
 
   generateModelSrv_ = localNodeHandlePtr_->advertiseService("generate_model", &ICPMapper::generateModel, this);
- 
-  if (!(localNodeHandlePtr_->getParam("filter_min_axis", filter_.minAxis)))
+
+  //Set ICP parameters
+  localNodeHandlePtr_->getParam("max_iterations", icpParam_.maxIterations);
+  localNodeHandlePtr_->getParam("max_correspondence_distance", icpParam_.maxCorrespondenceDistance);
+  localNodeHandlePtr_->getParam("transformation_epsilon", icpParam_.transformationEpsilon);
+  localNodeHandlePtr_->getParam("euclidean_fitness_epsilon", icpParam_.euclideanFitnessEpsilon);
+
+  // Set filter parameters
+  if (!(localNodeHandlePtr_->getParam("filter_leaf_size", filter_.leafSizes)))
   {
-    filter_.minAxis[0] = -0.2; 
-    filter_.minAxis[1] = -0.3;
-    filter_.minAxis[2] =  0.8;
+    filter_.leafSizes[0] = 0.01;  filter_.leafSizes[1] = 0.01;  filter_.leafSizes[2] = 0.01;
   }
-  
-  if (!(nodeHandlePtr->getParam("filter_max_axis", filter_.maxAxis)))
+  if (!(localNodeHandlePtr_->getParam("filter_min_axis", filter_.minAxis)) || !(nodeHandlePtr->getParam("filter_max_axis", filter_.maxAxis)))
   {
-    filter_.maxAxis[0] = 0.2;
-    filter_.maxAxis[1] = 0.17;
-    filter_.maxAxis[2] = 1.1;
+    filter_.minAxis[0] = -0.2;  filter_.maxAxis[0] = 0.2;
+    filter_.minAxis[1] = -0.3;  filter_.maxAxis[1] = 0.17;
+    filter_.minAxis[2] =  0.8;  filter_.maxAxis[2] = 1.1;
   }
 }
  
@@ -31,7 +35,8 @@ ICPMapper::ICPMapper(ros::NodeHandle* nodeHandlePtr, ros::NodeHandle* localNodeH
 
 ICPMapper::~ICPMapper()
 {
-
+  delete nodeHandlePtr_;
+  delete localNodeHandlePtr_;
 }
 
 
@@ -52,25 +57,33 @@ void ICPMapper::matching(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, con
     return;
   }
 
+  // Down sampling
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredTarget(new pcl::PointCloud<pcl::PointXYZRGB>());
+  pcl::ApproximateVoxelGrid<pcl::PointXYZRGB> sor;  
+  sor.setInputCloud(target);
+  sor.setLeafSize(filter_.leafSizes[0], filter_.leafSizes[1], filter_.leafSizes[2]);
+  sor.filter(*filteredTarget);
+
   pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
   icp.setInputCloud(input);
-  icp.setInputTarget(target);
+  icp.setInputTarget(filteredTarget);
  
-  // Set the max correspondence distance to 1cm (e.g., correspondences with higher distances will be ignored)
-  //icp.setMaxCorrespondenceDistance(1.0);
+  // Set the max correspondence distance (e.g., correspondences with higher distances will be ignored)
+  icp.setMaxCorrespondenceDistance(icpParam_.maxCorrespondenceDistance);
   // Set the maximum number of iterations (criterion 1)
-  icp.setMaximumIterations(800);
+  icp.setMaximumIterations(icpParam_.maxIterations);
   // Set the transformation epsilon (criterion 2)
-  //icp.setTransformationEpsilon(1e-9);
+  icp.setTransformationEpsilon(icpParam_.transformationEpsilon);
   // Set the euclidean distance difference epsilon (criterion 3)
-  //icp.setEuclideanFitnessEpsilon(1);
+  icp.setEuclideanFitnessEpsilon(icpParam_.euclideanFitnessEpsilon);
 
+  // Matching
   Eigen::Matrix4f initGuess = Eigen::Matrix4f::Identity();
   icp.align(*output, initGuess);
-
   *output += *target;
+
   std::cout << "Has converged:" << icp.hasConverged() << " Score: " << icp.getFitnessScore() << std::endl;
-  std::cout << icp.getFinalTransformation() << std::endl;
+  print4x4Matrix(icp.getFinalTransformation());
 }
 
 
@@ -113,7 +126,7 @@ void ICPMapper::filtering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, p
   // Create the filtering object
   pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
   sor.setInputCloud(tmp);
-  sor.setMeanK(50);
+  sor.setMeanK(100);
   sor.setStddevMulThresh(1.0);
   sor.filter(*output);
 }
@@ -144,12 +157,12 @@ void ICPMapper::rotatePointCloud(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& i
 
 void ICPMapper::print4x4Matrix(const Eigen::Matrix4f& matrix)
 {
-  printf ("Rotation matrix :\n");
-  printf ("    | %6.3f %6.3f %6.3f | \n", matrix (0, 0), matrix (0, 1), matrix (0, 2));
-  printf ("R = | %6.3f %6.3f %6.3f | \n", matrix (1, 0), matrix (1, 1), matrix (1, 2));
-  printf ("    | %6.3f %6.3f %6.3f | \n", matrix (2, 0), matrix (2, 1), matrix (2, 2));
-  printf ("Translation vector :\n");
-  printf ("t = < %6.3f, %6.3f, %6.3f >\n\n", matrix (0, 3), matrix (1, 3), matrix (2, 3));
+  printf("Rotation matrix :\n");
+  printf("    | %6.3f %6.3f %6.3f | \n", matrix (0, 0), matrix (0, 1), matrix (0, 2));
+  printf("R = | %6.3f %6.3f %6.3f | \n", matrix (1, 0), matrix (1, 1), matrix (1, 2));
+  printf("    | %6.3f %6.3f %6.3f | \n", matrix (2, 0), matrix (2, 1), matrix (2, 2));
+  printf("Translation vector :\n");
+  printf("t = < %6.3f, %6.3f, %6.3f >\n\n", matrix (0, 3), matrix (1, 3), matrix (2, 3));
 }
 
 
@@ -188,7 +201,7 @@ bool ICPMapper::generateModel(ssh_icp_mapping::GenerateModelRequest& req, ssh_ic
     return false;
   }
 
-  *model_ += *output;
+  *model_ = *output;
   publishPointCloud(model_, "kinect");
   res.isSuccess = true;
 
