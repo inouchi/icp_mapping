@@ -32,6 +32,12 @@ struct Filter
     leafSizes.resize(3);
     minAxis.resize(3);
     maxAxis.resize(3);
+
+    // Default parametrs
+    leafSizes[0] = leafSizes[1] = leafSizes [2] = 0.01;
+    minAxis[0] = -0.2;  maxAxis[0] = 0.2;
+    minAxis[1] = -0.3;  maxAxis[1] = 0.17;
+    minAxis[2] =  0.5;  maxAxis[2] = 1.1;
   }
 
   std::vector<float> leafSizes;
@@ -86,7 +92,7 @@ class ICPMapper
     ros::ServiceServer generateModelSrv_;  // It is called, and generate a model using ICP and publish the model
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr originalCloud_;  // Keep up-to-date a cloud data from Kinect
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr model_;          // GeFor determing scope of point cloud used in ICPunerated model by ICP
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr model_;          // For determing scope of point cloud used in ICPunerated model by ICP
 
     Filter filter_;  // For determing scope of point cloud used in ICP 
     ICPParameter icpParam_; 

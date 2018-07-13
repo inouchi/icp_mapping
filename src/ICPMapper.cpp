@@ -19,16 +19,9 @@ ICPMapper::ICPMapper(ros::NodeHandle* nodeHandlePtr, ros::NodeHandle* localNodeH
   localNodeHandlePtr_->getParam("euclidean_fitness_epsilon", icpParam_.euclideanFitnessEpsilon);
 
   // Set filter parameters
-  if (!(localNodeHandlePtr_->getParam("filter_leaf_size", filter_.leafSizes)))
-  {
-    filter_.leafSizes[0] = 0.01;  filter_.leafSizes[1] = 0.01;  filter_.leafSizes[2] = 0.01;
-  }
-  if (!(localNodeHandlePtr_->getParam("filter_min_axis", filter_.minAxis)) || !(nodeHandlePtr->getParam("filter_max_axis", filter_.maxAxis)))
-  {
-    filter_.minAxis[0] = -0.2;  filter_.maxAxis[0] = 0.2;
-    filter_.minAxis[1] = -0.3;  filter_.maxAxis[1] = 0.17;
-    filter_.minAxis[2] =  0.8;  filter_.maxAxis[2] = 1.1;
-  }
+  localNodeHandlePtr_->getParam("filter_leaf_size", filter_.leafSizes);
+  localNodeHandlePtr_->getParam("filter_min_axis", filter_.minAxis);
+  localNodeHandlePtr_->getParam("filter_max_axis", filter_.maxAxis);
 }
  
 
@@ -126,8 +119,8 @@ void ICPMapper::filtering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, p
   // Create the filtering object
   pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
   sor.setInputCloud(tmp);
-  sor.setMeanK(100);
-  sor.setStddevMulThresh(1.0);
+  sor.setMeanK(50);
+  sor.setStddevMulThresh(0.5);
   sor.filter(*output);
 }
 

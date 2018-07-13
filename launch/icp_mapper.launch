@@ -6,13 +6,13 @@
         <!-- The Filter is used for genetating a model using ICP -->
         <rosparam param="filter_leaf_size">[0.01, 0.01, 0.01]</rosparam>
         <rosparam param="filter_min_axis">[-0.2, -0.3, 0.5]</rosparam>
-        <rosparam param="filter_max_axis">[0.2, 0.18, 1.1]</rosparam>
+        <rosparam param="filter_max_axis">[0.2, 0.16, 1.3]</rosparam>
 
         <!-- ICP parameters-->
-        <param name="max_correspondence_distance" value="1.0" />
+        <param name="max_correspondence_distance" value="0.5" />
         <param name="max_iterations" value="200" />
         <param name="transformation_epsilon" value="1e-9" />
-        <param name="euclidean_fitness_epsilon" value="1.0" />
+        <param name="euclidean_fitness_epsilon" value="1e-9" />
 
     </node>
 
