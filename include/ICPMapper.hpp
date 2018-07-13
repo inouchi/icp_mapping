@@ -38,11 +38,13 @@ struct Filter
     minAxis[0] = -0.2;  maxAxis[0] = 0.2;
     minAxis[1] = -0.3;  maxAxis[1] = 0.17;
     minAxis[2] =  0.5;  maxAxis[2] = 1.1;
+    stddevMulThresh = 1.0;
   }
 
   std::vector<float> leafSizes;
   std::vector<float> minAxis;
   std::vector<float> maxAxis;
+  float stddevMulThresh;
 };
 
 

@@ -22,6 +22,9 @@ ICPMapper::ICPMapper(ros::NodeHandle* nodeHandlePtr, ros::NodeHandle* localNodeH
   localNodeHandlePtr_->getParam("filter_leaf_size", filter_.leafSizes);
   localNodeHandlePtr_->getParam("filter_min_axis", filter_.minAxis);
   localNodeHandlePtr_->getParam("filter_max_axis", filter_.maxAxis);
+  localNodeHandlePtr_->getParam("stddev_mul_thresh" , filter_.stddevMulThresh);
+
+  ROS_INFO("%f", filter_.stddevMulThresh);
 }
  
 
@@ -120,7 +123,7 @@ void ICPMapper::filtering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, p
   pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> sor;
   sor.setInputCloud(tmp);
   sor.setMeanK(50);
-  sor.setStddevMulThresh(0.5);
+  sor.setStddevMulThresh(filter_.stddevMulThresh);
   sor.filter(*output);
 }
 
