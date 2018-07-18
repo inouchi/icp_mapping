@@ -23,8 +23,6 @@ ICPMapper::ICPMapper(ros::NodeHandle* nodeHandlePtr, ros::NodeHandle* localNodeH
   localNodeHandlePtr_->getParam("filter_min_axis", filter_.minAxis);
   localNodeHandlePtr_->getParam("filter_max_axis", filter_.maxAxis);
   localNodeHandlePtr_->getParam("stddev_mul_thresh" , filter_.stddevMulThresh);
-
-  ROS_INFO("%f", filter_.stddevMulThresh);
 }
  
 

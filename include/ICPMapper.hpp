@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <mutex>
 
 // ROS specific includes
 #include <ros/ros.h>
