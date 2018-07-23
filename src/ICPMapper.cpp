@@ -220,6 +220,7 @@ bool ICPMapper::restorePreviousModel(ssh_icp_mapping::RestorePreviousModel::Requ
 
   *currentModel_ = *previousModel_;
   publishPointCloud(currentModel_, "kinect");
+  res.isSuccess = true;
 
   return true;
 }
