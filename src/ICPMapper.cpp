@@ -4,13 +4,15 @@ ICPMapper::ICPMapper(ros::NodeHandle* nodeHandlePtr, ros::NodeHandle* localNodeH
   : nodeHandlePtr_(nodeHandlePtr),
     localNodeHandlePtr_(localNodeHandlePtr),
     originalCloud_(new pcl::PointCloud<pcl::PointXYZRGB>),
-    model_(new pcl::PointCloud<pcl::PointXYZRGB>)
+    currentModel_(new pcl::PointCloud<pcl::PointXYZRGB>),
+    previousModel_(new pcl::PointCloud<pcl::PointXYZRGB>)
 {
   // Initialize Sibscriber and Publishers
   cloudSub_ = nodeHandlePtr_->subscribe("/kinect2/sd/points", 1, &ICPMapper::cloudCb, this);
   modelPub_ = nodeHandlePtr->advertise<sensor_msgs::PointCloud2>(ros::this_node::getName() + "/model", 1);
 
   generateModelSrv_ = localNodeHandlePtr_->advertiseService("generate_model", &ICPMapper::generateModel, this);
+  restorePreviousModelSrv_ = localNodeHandlePtr_->advertiseService("restore_previous_model", &ICPMapper::restorePreviousModel, this);
 
   //Set ICP parameters
   localNodeHandlePtr_->getParam("max_iterations", icpParam_.maxIterations);
@@ -160,7 +162,7 @@ void ICPMapper::print4x4Matrix(const Eigen::Matrix4f& matrix)
 }
 
 
-bool ICPMapper::generateModel(ssh_icp_mapping::GenerateModelRequest& req, ssh_icp_mapping::GenerateModelResponse& res)
+bool ICPMapper::generateModel(ssh_icp_mapping::GenerateModel::Request& req, ssh_icp_mapping::GenerateModel::Response& res)
 {
   std::vector<int> indices;
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr removedNaNCloud (new pcl::PointCloud<pcl::PointXYZRGB>());
@@ -172,20 +174,23 @@ bool ICPMapper::generateModel(ssh_icp_mapping::GenerateModelRequest& req, ssh_ic
   if (req.isFirstBoot)
   {
     std::cout << "--- Initial start-up for generating a model ---" << std::endl;
-    *model_ = *filteredCloud;
-    publishPointCloud(model_, "kinect");
+    *currentModel_ = *filteredCloud;
+    publishPointCloud(currentModel_, "kinect");
     res.isSuccess = true;
 
     return true;
   }
 
+  // Store a previous model
+  *previousModel_ = *currentModel_;
+
   std::cout << "--- Generating a model using ICP ---" << std::endl;
- 
+
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr rotatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>());
   rotatePointCloud(filteredCloud, rotatedCloud, req.degree, req.distance);
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output(new pcl::PointCloud<pcl::PointXYZRGB>());
-  matching(rotatedCloud, model_, output);
+  matching(rotatedCloud, currentModel_, output);
   
   if (output == nullptr)
   {
@@ -195,9 +200,26 @@ bool ICPMapper::generateModel(ssh_icp_mapping::GenerateModelRequest& req, ssh_ic
     return false;
   }
 
-  *model_ = *output;
-  publishPointCloud(model_, "kinect");
+  *currentModel_ = *output;
+  publishPointCloud(currentModel_, "kinect");
   res.isSuccess = true;
+
+  return true;
+}
+
+
+bool ICPMapper::restorePreviousModel(ssh_icp_mapping::RestorePreviousModel::Request& req, ssh_icp_mapping::RestorePreviousModel::Response& res)
+{
+  if (currentModel_ == nullptr)
+  {
+    res.isSuccess = false;
+    return false;
+  }
+
+  std::cout << "--- Restoring a previous model ---" << std::endl;
+
+  *currentModel_ = *previousModel_;
+  publishPointCloud(currentModel_, "kinect");
 
   return true;
 }
