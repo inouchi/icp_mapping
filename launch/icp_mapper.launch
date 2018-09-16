@@ -1,5 +1,9 @@
 <launch>
 
+    <!-- Run kinectv2 node -->
+    <include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch" />
+
+
     <!-- Run icp_mapper node -->
     <node name="icp_mapper_node" pkg="ssh_icp_mapping" type="icp_mapper_node" clear_params="true" output="screen" >
 
@@ -16,5 +20,9 @@
         <param name="euclidean_fitness_epsilon" value="1e-9" />
 
     </node>
+
+
+    <!-- Run rviz node -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find ssh_icp_mapping)/config/ssh_project.rviz" />
 
 </launch>
