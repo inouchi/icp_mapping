@@ -19,6 +19,9 @@
         <param name="transformation_epsilon" value="1e-9" />
         <param name="euclidean_fitness_epsilon" value="1e-9" />
 
+        <!-- The distance [m] from the center coordinate of Kinect to the one of turntable -->
+        <param name="distance" value="0.88" />
+
     </node>
 
 

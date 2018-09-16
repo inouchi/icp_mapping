@@ -25,6 +25,9 @@ ICPMapper::ICPMapper(ros::NodeHandle* nodeHandlePtr, ros::NodeHandle* localNodeH
   localNodeHandlePtr_->getParam("filter_min_axis", filter_.minAxis);
   localNodeHandlePtr_->getParam("filter_max_axis", filter_.maxAxis);
   localNodeHandlePtr_->getParam("stddev_mul_thresh" , filter_.stddevMulThresh);
+
+  // Set distance value for using in the function of rotatePointCloud
+  if (!localNodeHandlePtr->getParam("distance", distance_))  distance_ = 1.0f;
 }
  
 
@@ -128,12 +131,12 @@ void ICPMapper::filtering(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, p
 }
 
 
-void ICPMapper::rotatePointCloud(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& output, const float degree, const float distance)
+void ICPMapper::rotatePointCloud(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& input, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& output, const float degree)
 {
   Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
 
   pcl::PointCloud<pcl::PointXYZRGB> tmp;
-  transform(2, 3) = -distance;
+  transform(2, 3) = -distance_;
   pcl::transformPointCloud(*input, tmp, transform);
 
   transform = Eigen::Matrix4f::Identity();
@@ -146,7 +149,7 @@ void ICPMapper::rotatePointCloud(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& i
   pcl::transformPointCloud(tmp, tmp, transform);
 
   transform = Eigen::Matrix4f::Identity();
-  transform(2, 3) = distance;
+  transform(2, 3) = distance_;
   pcl::transformPointCloud(tmp, *output, transform);
 }
 
@@ -187,7 +190,7 @@ bool ICPMapper::generateModel(ssh_icp_mapping::GenerateModel::Request& req, ssh_
   std::cout << "--- Generating a model using ICP ---" << std::endl;
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr rotatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-  rotatePointCloud(filteredCloud, rotatedCloud, req.degree, req.distance);
+  rotatePointCloud(filteredCloud, rotatedCloud, req.degree);
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output(new pcl::PointCloud<pcl::PointXYZRGB>());
   matching(rotatedCloud, currentModel_, output);
