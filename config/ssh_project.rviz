@@ -96,10 +96,7 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        kinect2_link:
-          kinect2_rgb_optical_frame:
-            kinect2_ir_optical_frame:
-              {}
+        {}
       Update Interval: 0
       Value: true
   Enabled: true
@@ -126,16 +123,16 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.67065501
+      Distance: 0.00999999978
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: -4.21797195e-05
+        Y: 0.0198895875
+        Z: -1.98895686e-05
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
@@ -144,7 +141,7 @@ Visualization Manager:
       Pitch: -1.56979632
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.70859241
+      Yaw: 4.71859312
     Saved: ~
 Window Geometry:
   Displays:
