@@ -4,6 +4,7 @@ ICPMapper::ICPMapper(ros::NodeHandle* nodeHandlePtr, ros::NodeHandle* localNodeH
   : nodeHandlePtr_(nodeHandlePtr),
     localNodeHandlePtr_(localNodeHandlePtr),
     originalCloud_(new pcl::PointCloud<pcl::PointXYZRGB>),
+    previousIcpResult_(new pcl::PointCloud<pcl::PointXYZRGB>),
     currentModel_(new pcl::PointCloud<pcl::PointXYZRGB>),
     previousModel_(new pcl::PointCloud<pcl::PointXYZRGB>)
 {
@@ -76,10 +77,11 @@ void ICPMapper::matching(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr input, con
   // Set the euclidean distance difference epsilon (criterion 3)
   icp.setEuclideanFitnessEpsilon(icpParam_.euclideanFitnessEpsilon);
 
-  // Matching
+  // Set initial alignment estimate found using robot odometry
   Eigen::Matrix4f initGuess = Eigen::Matrix4f::Identity();
+
+  // Matching
   icp.align(*output, initGuess);
-  *output += *target;
 
   std::cout << "Has converged:" << icp.hasConverged() << " Score: " << icp.getFitnessScore() << std::endl;
   print4x4Matrix(icp.getFinalTransformation());
@@ -176,8 +178,12 @@ bool ICPMapper::generateModel(ssh_icp_mapping::GenerateModel::Request& req, ssh_
 
   if (req.isFirstBoot)
   {
+    // Store a previous model
+    *previousModel_ = *currentModel_;
+
     std::cout << "--- Initial start-up for generating a model ---" << std::endl;
     *currentModel_ = *filteredCloud;
+    *previousIcpResult_ = *currentModel_;
     publishPointCloud(currentModel_, "kinect");
     res.isSuccess = true;
 
@@ -193,7 +199,7 @@ bool ICPMapper::generateModel(ssh_icp_mapping::GenerateModel::Request& req, ssh_
   rotatePointCloud(filteredCloud, rotatedCloud, req.degree);
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr output(new pcl::PointCloud<pcl::PointXYZRGB>());
-  matching(rotatedCloud, currentModel_, output);
+  matching(rotatedCloud, previousIcpResult_, output);
   
   if (output == nullptr)
   {
@@ -203,7 +209,8 @@ bool ICPMapper::generateModel(ssh_icp_mapping::GenerateModel::Request& req, ssh_
     return false;
   }
 
-  *currentModel_ = *output;
+  *previousIcpResult_ = *output; 
+  *currentModel_ += *output;
   publishPointCloud(currentModel_, "kinect");
   res.isSuccess = true;
 
