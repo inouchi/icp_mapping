@@ -5,7 +5,7 @@ Note: You must build an enviroment for using Kinect v1 or v2.
 
 
 # Usage
-As shown in the following moving images, a measurement object is placed on a rotary table.  
+As shown in the following movie, a measurement object is placed on a turntable.  
 You rotat the turntable to get distance data of the measurement object from a variety of angles.  
 Note: The turntable and Kinect must be installed horizontally on the ground.
   
