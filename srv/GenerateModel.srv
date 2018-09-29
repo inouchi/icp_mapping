@@ -1,4 +1,0 @@
-bool isFirstBoot
-float32 degree
----
-bool isSuccess

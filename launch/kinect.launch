@@ -1,9 +1,0 @@
-<launch>
-
-    <!-- Run kinectv2 node -->
-    <include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch" />
-
-    <!-- Run rviz node -->
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find ssh_icp_mapping)/config/kinect.rviz" />
-
-</launch>
