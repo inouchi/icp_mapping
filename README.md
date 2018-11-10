@@ -31,7 +31,7 @@ Please use the function if integration by ICP fails.
 $ rosservice call /icp_mapper_node/restore_previous_model
 ```
   
-![experiment](https://aisl-serv6.aisl.cs.tut.ac.jp:20443/inouchi/ssh_icp_mapping/raw/media/experiment.gif)
+![experiment](https://github.com/inouchi/ssh_icp_mapping/raw/media/experiment.gif)
 
 # Parameters
 All the parameters are listed in launch/icp_mapper.launch as ros params.
@@ -39,4 +39,4 @@ You need to change the parameters as necessary.
 
 
 # Generated 3D Model
-![3d_model](https://aisl-serv6.aisl.cs.tut.ac.jp:20443/inouchi/ssh_icp_mapping/raw/media/3d_model.gif)
+![3d_model](https://github.com/inouchi/ssh_icp_mapping/raw/media/3d_model.gif)
