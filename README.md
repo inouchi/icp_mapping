@@ -1,4 +1,4 @@
-# ssh_icp_mapping
+# icp_mapping
 This package is for generating a 3D model using a Kinect v1 or v2.
 We use ICP algorithm to align distance data obtained from a variety of angles.  
 ``Note: You must build an enviroment for using Kinect v1 or v2.``
